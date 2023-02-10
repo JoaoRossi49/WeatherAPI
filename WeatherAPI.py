@@ -1,37 +1,56 @@
 import requests
 import json 
+import csv
 from datetime import datetime
 
 class weather():
-    
-
+    #Método construtor armazenando key de api, url e alimentando os dados
+    #em formato json
     def __init__(self, lat:float, lon:float):
         self.lat = lat
         self.lon = lon
-
-
-    def prevTempo(self):
-        latitude = self.lat
-        longitude = self.lon
         key = "707807e0922f41c621c5c65f70ecd528"
-        api  =f"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={key}"
-        response = requests.get(api)
-        return response.text
+        api = f"https://api.openweathermap.org/data/2.5/weather?lat={self.lat}&lon={self.lon}&appid={key}"
+        self.dados = json.loads((requests.get(api)).text)
 
-coord = weather(-22.212481,-49.938074)
+    #Crude para acessar dados vindos da API
+    def getCidade(self):
+        return self.dados['name']
+    
+    def getTemp(self):
+        return self.dados['main']['temp']-273.15
+
+    def getPordoSol(self):
+        return datetime.fromtimestamp(self.dados['sys']['sunset'])
 
 
 
-PrevTempoStr = coord.prevTempo()
+arquivo = open(r"municipios.csv", encoding='utf-8')
 
-result = json.loads(PrevTempoStr)
+tabela = csv.reader(arquivo, delimiter=',')
+
+nome = []
+lat = []
+lon = []
+
+for i in tabela:
+    nome.append(i[1])
+    lat.append(i[2])
+    lon.append(i[3])
 
 
-tempAtual = float(result['main']['temp'])-273.15
-
-cidade = result['name']
-
-porDosol = datetime.fromtimestamp(result['sys']['sunset'])
-
-print(f"Olá! Você atualmente está em {cidade}, a temperatura atual é: {tempAtual} graus célcius, o pôr do sol foi em: {porDosol}")
-
+while True:
+    index = nome.index(input('Digite o nome da cidade desejada--> '))
+    coord = weather(lat[index], lon[index])
+    print(f'Você escolheu a cidade {nome[index]}, a temperatura atual é {coord.getTemp()}, o por do sol foi em {coord.getPordoSol()}')
+    resp = input('Gostaria de selecionar outra cidade? (Y/N)')
+    try:
+        if resp == 'Y':
+            pass
+        if resp == 'N':
+            print('Obrigado por usar WeatherAPI!')
+            break
+    except TypeError:
+        print('Valor inválido!')
+        pass
+        
